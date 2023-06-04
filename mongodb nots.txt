@@ -1,0 +1,175 @@
+db.tours.find({price: {$lte: 500} })  // less than or equal 500 
+db.tours.find({price: {$lt: 500} })  // less than 500
+db.tours.find({price: {$lt: 500}, rating : {$gte : 3.8}})  // price less than 500  && rating grater than or equal 3.8
+db.tours.find(  {  $or : [   {price: {$lt:500}} ,  {rating : {$gte:4.8}}       ]  }  ) // price less than 500 || rating grater than or equal 3.8
+natours-test> db.tours.find(  {  $or : [   {price: {$gt:500}} ,  {rating : {$gte:4.8}}       ]  } , {name : 1 }  ) // display only the name 
+// Output
+[
+  {
+    _id: ObjectId("63fbae5bacb5831050935868"),
+    name: 'The Sea Explorer'
+  },
+  {
+    _id: ObjectId("63fbae5bacb5831050935869"),
+    name: 'The Snow Adventurer'
+  }
+]
+// update
+natours-test> db.tours.updateOne({ name: "The Snow Adventurer"}, { $set: {price: 597 }   })  
+// Output
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+natours-test> db.tours.updateMany({ name: "The Snow Adventurer"}, { $set: {price: 597 }   })
+// Output
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 0,
+  upsertedCount: 0
+}
+
+natours-test> db.tours.find( { price: {$gt: 500} , rating : {$gte: 4.8} } )
+[
+  {
+    _id: ObjectId("63fbae5bacb5831050935869"),
+    name: 'The Snow Adventurer',
+    price: 597,
+    rating: 4.9,
+    difficulty: 'easy'
+  }
+]
+
+natours-test>  db.tours.updateMany({ price: {$gt: 500} , rating : {$gte: 4.8} } , { $set : { premium: true } })
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+natours-test> db.tours.find( { price: {$gt: 500} , rating : {$gte: 4.8} } )
+[
+  {
+    _id: ObjectId("63fbae5bacb5831050935869"),
+    name: 'The Snow Adventurer',
+    price: 597,
+    rating: 4.9,
+    difficulty: 'easy',
+    premium: true
+  }
+]
+
+db.tours.replaceOne ( {}  , {} )
+db.tours.replaceMany ( {}  , {} )
+
+Certainly! Here are some examples of using the replaceOne() and replaceMany() methods in MongoDB:
+
+replaceOne()
+The replaceOne() method updates a single document in a collection that matches a specified filter. Here's an example:
+
+Suppose you have a users collection that contains documents with the following structure:
+
+{
+  "_id": ObjectId("60376696e2d3b69c1978c96f"),
+  "name": "John",
+  "age": 25,
+  "email": "john@example.com"
+}
+
+To update the document with _id equal to 60376696e2d3b69c1978c96f and set the age to 26, you can use the following command:
+
+db.users.replaceOne(
+  { _id: ObjectId("60376696e2d3b69c1978c96f") },
+  { name: "John", age: 26, email: "john@example.com" }
+)
+
+This command will replace the entire document with the new document that has the updated age value.
+
+replaceMany()
+The replaceMany() method updates all documents in a collection that match a specified filter. Here's an example:
+
+Suppose you have a users collection that contains documents with the following structure:
+
+{
+  "_id": ObjectId("60376696e2d3b69c1978c96f"),
+  "name": "John",
+  "age": 25,
+  "email": "john@example.com"
+},
+{
+  "_id": ObjectId("603766afe2d3b69c1978c970"),
+  "name": "Jane",
+  "age": 30,
+  "email": "jane@example.com"
+},
+{
+  "_id": ObjectId("603766b8e2d3b69c1978c971"),
+  "name": "Bob",
+  "age": 35,
+  "email": "bob@example.com"
+}
+
+To update the age value of all documents with the name equal to "John" to 26, you can use the following command:
+
+db.users.replaceMany(
+  { name: "John" },
+  { $set: { age: 26 } }
+)
+
+This command will replace the age value of all documents with the name equal to "John" with the new age value of 26. Note that we used the $set operator in the second argument to update only the age field and leave all other fields unchanged.
+
+natours-test> db.tours.find()
+[
+  {
+    _id: ObjectId("63f8cf2c4feb3b11a3038546"),
+    name: 'The Forst Hiker',
+    price: 297,
+    rating: 4.7
+  },
+  {
+    _id: ObjectId("63fbae5bacb5831050935868"),
+    name: 'The Sea Explorer',
+    price: 297,
+    rating: 4.8
+  },
+  {
+    _id: ObjectId("63fbae5bacb5831050935869"),
+    name: 'The Snow Adventurer',
+    price: 597,
+    rating: 4.9,
+    difficulty: 'easy',
+    premium: true
+  }
+]
+
+natours-test> db.tours.deleteMany( {rating : { $lt : 4.8 } } )
+{ acknowledged: true, deletedCount: 1 }
+
+natours-test> db.tours.find()
+[
+  {
+    _id: ObjectId("63fbae5bacb5831050935868"),
+    name: 'The Sea Explorer',
+    price: 297,
+    rating: 4.8
+  },
+  {
+    _id: ObjectId("63fbae5bacb5831050935869"),
+    name: 'The Snow Adventurer',
+    price: 597,
+    rating: 4.9,
+    difficulty: 'easy',
+    premium: true
+  }
+]
+
+
+// delete all 
+db.tours.deleteMany({})
