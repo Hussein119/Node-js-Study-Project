@@ -204,3 +204,14 @@ getAllTours
     //   .equals(5)
     //   .where('difficulty')
     //   .equals('easy');
+
+
+this for debuging 
+    npm i ndb --global  
+
+"start:prod": "cross-env NODE_ENV=production nodemon server.js",
+npm install --save-dev cross-env
+
+config.env
+JWT_EXPIRES_IN = 90d 10h 5m 3s 
+
