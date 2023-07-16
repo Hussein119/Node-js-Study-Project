@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 //const validator = require('validator');
+// const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -80,7 +81,48 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       defaule: false,
     },
+    startLocation: {
+      // GeoJSON
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    //guides: Array,
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
+    // child referencing -> instead of this we going to implement 'virtual populate'
+    // reviews: [
+    //   {
+    //     type: mongoose.Schema.ObjectId,
+    //     ref: 'Review',
+    //   },
+    // ],
   },
+  // make sure that when we have a virtual property,
+  //filed does not stored in the database but calculated using some other value,
+  //So we want to also show up whenever there is a an output
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
@@ -91,11 +133,28 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+// virtual populate
+tourSchema.virtual('reviews', {
+  ref: 'Review', // model name
+  foreignField: 'tour', // 'tour' exists in review model
+  localField: '_id', // the id of the tour in the tour model
+});
+
 // DOCUMENT MIDDLEWARE: runs before .save() and .create() Only
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
+
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromises);
+//   /*
+//   The Promise.all() method is then used to wait for all of the promises to resolve.
+//   Once all of the promises have resolved, the guides array is updated with the user objects.
+//   */
+//   next();
+// });
 
 // tourSchema.pre('save', function (next) {
 //   console.log('will save doc');
@@ -110,7 +169,6 @@ tourSchema.pre('save', function (next) {
 // Query Middleware
 //tourSchema.pre('find', function (next) {
 tourSchema.pre(/^find/, function (next) {
-  // First middleware function
   // hide the secretTour
   this.find({ secretTour: { $ne: true } });
   this.start = Date.now();
@@ -118,7 +176,14 @@ tourSchema.pre(/^find/, function (next) {
 });
 
 tourSchema.pre(/^find/, function (next) {
-  // Second middleware function
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+  next();
+});
+
+tourSchema.pre(/^find/, function (next) {
   console.log(`Query took ${Date.now() - this.start} milliSecounds!`);
   next();
 });
