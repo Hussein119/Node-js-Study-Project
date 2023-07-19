@@ -34,18 +34,40 @@ router
   .get(tourcontrollers.aliasTopTours, tourcontrollers.getAllTours);
 
 router.route('/tour-stats').get(tourcontrollers.getTourStats);
-router.route('/monthly-plan/:year').get(tourcontrollers.getMonthlyPlan);
+router
+  .route('/monthly-plan/:year')
+  .get(
+    authControllers.protect,
+    authControllers.restrictTo('admin', 'lead-guide', 'guide'),
+    tourcontrollers.getMonthlyPlan
+  );
+
+router
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(tourcontrollers.getToursWithin);
+// /tours-within?distance=233&center=27.18664029908823, 31.168556231386006&unit=mi
+// /tours-within/233/center/27.18664029908823, 31.168556231386006/unit/mi
+
+router.route('/distances/:latlng/unit/:unit').get(tourcontrollers.getDistances);
 
 router
   .route('/')
-  .get(authControllers.protect, tourcontrollers.getAllTours)
-  .post(tourcontrollers.createTour);
+  .get(tourcontrollers.getAllTours)
+  .post(
+    authControllers.protect,
+    authControllers.restrictTo('admin', 'lead-guide'),
+    tourcontrollers.createTour
+  );
 //.post(tourcontrollers.checkBody, tourcontrollers.createTour);
 
 router
   .route('/:id')
   .get(tourcontrollers.getTour)
-  .patch(tourcontrollers.updateTour)
+  .patch(
+    authControllers.protect,
+    authControllers.restrictTo('admin', 'lead-guide'),
+    tourcontrollers.updateTour
+  )
   .delete(
     authControllers.protect,
     authControllers.restrictTo('admin', 'lead-guide'),

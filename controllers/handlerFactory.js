@@ -2,6 +2,30 @@ const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
+exports.getAll = (Model) =>
+  catchAsync(async (req, res, next) => {
+    // To allow for nested GET reviews on tour (hack)
+    let filter = {};
+    // to get review by id , if this condition removed will get all reviews
+    if (req.params.tourId) filter = { tour: req.params.tourId };
+
+    // EXECUTE QUERY
+    const features = new APIFeatures(Model.find(filter), req.query)
+      .filter()
+      .sort()
+      .limitFileds()
+      .Pagination();
+    // const doc = await features.query.explain();
+    const doc = await features.query;
+
+    // SEND RESPONSE
+    res.status(200).json({
+      status: 'success',
+      results: doc.length,
+      data: doc,
+    });
+  });
+
 exports.createOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const newdoc = await Model.create(req.body);

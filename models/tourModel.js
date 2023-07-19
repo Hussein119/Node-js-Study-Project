@@ -37,6 +37,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
       max: [5, 'Rating must be below 5.0'],
+      set: (val) => Math.round(val * 10) / 10, // 4.66666 -> 4.7
     },
     ratingsQuantity: {
       type: Number,
@@ -66,9 +67,9 @@ const tourSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    imageColor: {
+    imageCover: {
       type: String,
-      //required: [true, 'A tour must have a cover image'],
+      required: [true, 'A tour must have a cover image'],
     },
     images: [String],
     createdAt: {
@@ -128,6 +129,11 @@ const tourSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 
 tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
@@ -189,10 +195,11 @@ tourSchema.pre(/^find/, function (next) {
 });
 
 // Aggregation middleware
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } }); // unshift to add to the begaining of array
-  next();
-});
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } }); // unshift to add to the begaining of array
+//   console.log(this.pipeline());
+//   next();
+// });
 
 // model (Thats why we write it 'Tour' not 'tour')
 const Tour = mongoose.model('Tour', tourSchema);

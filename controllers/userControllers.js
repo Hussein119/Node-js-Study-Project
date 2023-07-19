@@ -1,5 +1,4 @@
 const User = require('../models/userModel');
-const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const factory = require('./handlerFactory');
@@ -14,22 +13,31 @@ const filterObj = (obj, ...allowedFields) => {
 
 // ROUTE HANDLER
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  // EXECUTE QUERY
-  const features = new APIFeatures(User.find(), req.query)
-    .filter()
-    .sort()
-    .limitFileds()
-    .Pagination();
-  const users = await features.query;
+exports.getAllUsers = factory.getAll(User);
 
-  // SEND RESPONSE
+// Not working !! 🛑
+//exports.getUser = factory.getOne(User);
+
+exports.getUser = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
   res.status(200).json({
     status: 'success',
-    results: users.length,
-    data: users,
+    data: user,
   });
 });
+
+exports.updateUser = factory.updateOne(User);
+
+exports.deleteUser = factory.deleteOne(User);
+
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+}
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   // 1) Create error if user POSTs password data
@@ -68,19 +76,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 exports.createUser = (req, res) => {
   res.status(500).json({
     status: 'error',
-    message: 'This route is not supported',
+    message: 'This route is not supported! Please use /signup instead.',
   });
 };
-
-exports.getUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not supported',
-  });
-};
-
-exports.getUser = factory.getOne(User);
-
-exports.updateUser = factory.updateOne(User);
-
-exports.deleteUser = factory.deleteOne(User);
