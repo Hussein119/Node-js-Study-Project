@@ -17,7 +17,12 @@ router.use(authControllers.protect);
 
 router.patch('/updateMyPassword', authControllers.updatePassword);
 router.get('/getMe', userControllers.getMe, userControllers.getUser);
-router.patch('/updateMe', userControllers.updateMe);
+router.patch(
+  '/updateMe',
+  userControllers.uploadUserPhoto,
+  userControllers.resizeUserPhoto,
+  userControllers.updateMe
+);
 router.delete('/deleteMe', userControllers.deleteMe);
 
 // will run for all the routes after it, beacuse the middleware run in sequence

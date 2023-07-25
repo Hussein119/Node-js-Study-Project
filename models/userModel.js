@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema({
     trim: true, //remove whitespaces
     maxlength: [40, 'Maxlength is 40 characters!!'],
   },
-  photo: String,
+  photo: {
+    type: String,
+    default: 'default.jpg',
+  },
   role: {
     type: String,
     enum: ['user', 'guide', 'lead-guide', 'admin'],
@@ -102,7 +105,7 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
+  //console.log({ resetToken }, this.passwordResetToken);
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // expires after 10m
   return resetToken;

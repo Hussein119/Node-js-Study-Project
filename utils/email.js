@@ -1,66 +1,81 @@
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable lines-between-class-members */
+/* eslint-disable no-sequences */
+/* eslint-disable no-unused-expressions */
+/* eslint-disable no-undef */
 const nodemailer = require('nodemailer');
-const catchAsync = require('./catchAsync');
+const pug = require('pug');
+const htmlToText = require('html-to-text').htmlToText;
 
-const sendEmail = async (options) => {
-  // 1) create a transporter
+module.exports = class Email {
+  constructor(user, url) {
+    (this.to = user.email),
+      (this.firstName = user.name.split(' ')[0]),
+      (this.url = url);
+    this.from = `Hussein <${process.env.EMAIL_FROM}>`;
+  }
+  newTransport() {
+    if (process.env.NODE_ENV === 'production') {
+      // Sendgrid
+      return nodemailer.createTransport({
+        service: 'gmail',
+        //name: process.env.NAME,
+        //host: process.env.EMAIL_HOST,
+        //port: process.env.EMAIL_PORT,
+        //secure: true,
+        auth: {
+          user: process.env.GMAIL_USERNAME,
+          pass: process.env.GMAIL_PASSWORD,
+          //user: process.env.EMAIL_USERNAME,
+          //pass: process.env.EMAIL_PASSWORD,
+        },
+      });
+    }
+    return nodemailer.createTransport({
+      //service: 'Gmail',
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      // Activate in gmail "less secure app" option
+    });
+  }
+  async send(template, subject) {
+    // Send the actual email
+    // 1) Render HTML based on a pug template
 
-  const transporter = nodemailer.createTransport({
-    //service: 'Gmail',
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-    // Activate in gmail "less secure app" option
-  });
+    const html = pug.renderFile(
+      `${__dirname}/../views/emails/${template}.pug`,
+      {
+        firstName: this.firstName,
+        url: this.url,
+        subject,
+      }
+    );
 
-  // 2) Define the email options
+    // 2) Define email options
+    const mailOption = {
+      from: this.from,
+      to: this.to,
+      subject,
+      html,
+      text: htmlToText(html),
+    };
 
-  const mailOption = {
-    form: 'Hussein <hussein@io.com>',
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-    //html:
-  };
+    // 3) Create a transport and send email
 
-  // 3) Actually send the email
+    await this.newTransport().sendMail(mailOption);
+  }
+  async sendWelcome() {
+    await this.send('welcome', 'Welcome to the Natours Family!');
+  }
 
-  await transporter.sendMail(mailOption);
+  async sendPasswordReset() {
+    await this.send(
+      'passwordReset',
+      'Your password reset token (valid for only 10 minutes)'
+    );
+  }
 };
-
-module.exports = sendEmail;
-
-/*
-When using Nodemailer, the `service` option depends on the email service provider you are using. Here are some popular email service providers along with their respective service names that you can use as the `service` option:
-
-1. Gmail:
-   - Service: `'Gmail'`
-   - Example: `service: 'Gmail'`
-
-2. Outlook.com / Hotmail.com:
-   - Service: `'Outlook'`
-   - Example: `service: 'Outlook'`
-
-3. Yahoo Mail:
-   - Service: `'Yahoo'`
-   - Example: `service: 'Yahoo'`
-
-4. Office 365:
-   - Service: `'Office365'`
-   - Example: `service: 'Office365'`
-
-5. SendGrid:
-   - Service: `'SendGrid'`
-   - Example: `service: 'SendGrid'`
-
-6. Mailgun:
-   - Service: `'Mailgun'`
-   - Example: `service: 'Mailgun'`
-
-These are just a few examples, and there are many more email service providers you can use with Nodemailer. Choose the appropriate service name based on the email service you are using. Additionally, make sure you have the necessary credentials (username and password) for the chosen email service provider.
-
-Note: Some email service providers may require additional configuration, such as setting up an application-specific password or enabling specific settings in your email account. Please refer to the documentation of your email service provider for more information on how to set up SMTP access and obtain the required credentials.
-
-*/

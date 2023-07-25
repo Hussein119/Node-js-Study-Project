@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
@@ -12,11 +13,14 @@ const xss = require('xss-clean');
 // npm i hpp
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
+const cors = require('cors');
 
 const globalErrorHandler = require('./controllers/errorControllers');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 const viewRoutes = require('./routes/viewRoutes');
 const AppError = require('./utils/appError');
 
@@ -29,6 +33,17 @@ app.set('views', path.join(__dirname, 'views'));
 // GLOBAL middlewares
 // middleware : function that can modify the incoming request data
 // called middleware because it is in the middle of the request and respond.
+
+// Implement CORS
+app.use(cors());
+// Access-Control-Allow-Origin *
+// api.natours.com, front-end natours.com
+// app.use(cors({
+//   origin: 'https://www.natours.com'
+// }))
+
+app.options('*', cors());
+// app.options('/api/v1/tours/:id', cors());
 
 // Serving static files
 //app.use(express.static(`${__dirname}/public`));
@@ -52,8 +67,9 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Body parser, reading data from the body into req.body
-app.use(express.json());
-//app.use(express.json({limit: '10kb'}));
+//app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL query injection
@@ -76,6 +92,8 @@ app.use(
   })
 );
 
+app.use(compression());
+
 // Just Test Middeleware
 // app.use((req, res, next) => {
 //   req.requestTime = new Date().toISOString();
@@ -88,6 +106,7 @@ app.use('/', viewRoutes);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/bookings', bookingRoutes);
 
 // this code be the last one after a routes
 // all -> for all http methods
